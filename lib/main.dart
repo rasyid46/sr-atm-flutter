@@ -2,7 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/material.dart'; 
+import 'package:http/http.dart' as http;
 
 // void main() => runApp(MyApp()); 
 
@@ -10,7 +14,7 @@ import 'package:flutter/material.dart';
 void main() {
   runApp(MaterialApp(
     title: 'Navigation Basics',
-    home: SecondRoute(),
+    home: MyApp(),
   ));
 }
 
@@ -66,28 +70,7 @@ Widget titleSection = Container(
 );
 
 
-   
-
-Column _buildButtonColumn(Color color, IconData icon, String label) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: color),
-        Container(
-          margin: const EdgeInsets.only(top: 8),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: color,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+    
 
 class MyApp extends StatelessWidget {
   @override
@@ -230,10 +213,107 @@ class ButtonDemoState extends State<ButtonDemo> {
                       "Subtract",
                     ),
                   ),
+                   new RaisedButton(
+                    onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => FirstRoute(),
+                      );
+                    },
+                    textColor: Colors.white,
+                    color: Colors.red,
+                    padding: const EdgeInsets.all(8.0),
+                    child: new Text(
+                      "Firt rute",
+                    ),
+                  ),
+                   new RaisedButton(
+                    onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => MyApp()),
+                      );
+                    },
+                    textColor: Colors.white,
+                    color: Colors.red,
+                    padding: const EdgeInsets.all(8.0),
+                    child: new Text(
+                      "My App",
+                    ),
+                  ),
                 ],
               )
             ],
           ),
         ));
+  }
+}
+ 
+
+ Future<Post> fetchPost() async {
+  final response =
+      await http.get('https://jsonplaceholder.typicode.com/posts/1');
+
+  if (response.statusCode == 200) {
+    // If the call to the server was successful, parse the JSON.
+    return Post.fromJson(json.decode(response.body));
+  } else {
+    // If that call was not successful, throw an error.
+    throw Exception('Failed to load post');
+  }
+}
+
+class Post {
+  final int userId;
+  final int id;
+  final String title;
+  final String body;
+
+  Post({this.userId, this.id, this.title, this.body});
+
+  factory Post.fromJson(Map<String, dynamic> json) {
+    return Post(
+      userId: json['userId'],
+      id: json['id'],
+      title: json['title'],
+      body: json['body'],
+    );
+  }
+}
+
+
+class MyAppPost extends StatelessWidget {
+  final Future<Post> post;
+
+  MyAppPost({Key key, this.post}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Fetch Data Example',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Fetch Data Example'),
+        ),
+        body: Center(
+          child: FutureBuilder<Post>(
+            future: post,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Text(snapshot.data.title);
+              } else if (snapshot.hasError) {
+                return Text("${snapshot.error}");
+              }
+
+              // By default, show a loading spinner.
+              return CircularProgressIndicator();
+            },
+          ),
+        ),
+      ),
+    );
   }
 }
